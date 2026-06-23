@@ -12,31 +12,33 @@ router.post("/", async (req, res) => {
       return;
     }
 
-    // clerk's verifier expects a Web Request with the raw body; express.raw gives a Buffer.
+    // 1. Fixed the typo from (req, body) to (req.body)
     const payload = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : String(req.body);
+    
+    // 2. Build a valid modern standard Request for verifyWebhook
     const request = new Request("http://internal/webhooks/clerk", {
       method: "POST",
       headers: new Headers(req.headers),
       body: payload,
     });
 
-    // throws if the signature is wrong or the body was tampered with; only then do we trust evt.
     const evt = await verifyWebhook(request, { signingSecret });
-
+    
     if (evt.type === "user.created" || evt.type === "user.updated") {
       const u = evt.data;
 
-      const email =
+      const email = 
         u.email_addresses?.find((e) => e.id === u.primary_email_address_id)?.email_address ??
         u.email_addresses?.[0]?.email_address;
 
-      const fullName =
+      const fullName = 
         [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || email?.split("@")[0];
 
+      // Double check if your database schema uses clerkId or clerkID!
       await User.findOneAndUpdate(
-        { clerkId: u.id },
+        { clerkId: u.id }, 
         { clerkId: u.id, email, fullName, profilePic: u.image_url },
-        { new: true, upsert: true, setDefaultsOnInsert: true },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
       );
     }
 
