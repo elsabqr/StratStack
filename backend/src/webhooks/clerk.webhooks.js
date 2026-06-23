@@ -12,18 +12,21 @@ router.post("/", async (req, res) => {
       return;
     }
 
-    // 1. Get the raw payload exactly as it arrived
     const payload = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : String(req.body);
     
-    // 2. Extract the exact Svix headers Clerk requires
-    const headers = {
-      "svix-id": req.headers["svix-id"],
-      "svix-timestamp": req.headers["svix-timestamp"],
-      "svix-signature": req.headers["svix-signature"],
-    };
+    // Fixed: Converting Express headers properly so new Headers() works natively
+    const headersInit = {};
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (value !== undefined) headersInit[key] = Array.isArray(value) ? value.join(", ") : String(value);
+    }
 
-    // 3. Verify the webhook with the raw payload and headers
-    const evt = await verifyWebhook(payload, headers, { signingSecret });
+    const request = new Request("http://internal/webhooks/clerk", {
+      method: "POST",
+      headers: new Headers(headersInit),
+      body: payload,
+    });
+
+    const evt = await verifyWebhook(request, { signingSecret });
     
     if (evt.type === "user.created" || evt.type === "user.updated") {
       const u = evt.data;
@@ -35,7 +38,7 @@ router.post("/", async (req, res) => {
       const fullName = 
         [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || email?.split("@")[0];
 
-      // 4. Updated to 'clerkID' to match your exact Mongoose Schema
+      // Fixed: Changed clerkId to clerkID to match your mongoose model
       await User.findOneAndUpdate(
         { clerkID: u.id }, 
         { clerkID: u.id, email, fullName, profilePic: u.image_url },
@@ -44,7 +47,7 @@ router.post("/", async (req, res) => {
     }
 
     if (evt.type === "user.deleted") {
-      // 5. Updated to 'clerkID' here too
+      // Fixed: Changed clerkId to clerkID to match your mongoose model
       if (evt.data.id) await User.findOneAndDelete({ clerkID: evt.data.id });
     }
 
