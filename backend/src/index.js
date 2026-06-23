@@ -5,6 +5,7 @@ dns.setServers(["1.1.1.1", "8.8.8.8"]);
 import express from "express";
 import "dotenv/config";
 import cors from "cors";
+import { job } from "./lib/cron.js"; // Adjust this path to where your actual cron job is located
 
 import fs from "fs";
 import path from "path";
