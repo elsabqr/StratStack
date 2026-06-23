@@ -12,17 +12,18 @@ router.post("/", async (req, res) => {
       return;
     }
 
-    // 1. Fixed the typo from (req, body) to (req.body)
+    // 1. Get the raw payload exactly as it arrived
     const payload = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : String(req.body);
     
-    // 2. Build a valid modern standard Request for verifyWebhook
-    const request = new Request("http://internal/webhooks/clerk", {
-      method: "POST",
-      headers: new Headers(req.headers),
-      body: payload,
-    });
+    // 2. Extract the exact Svix headers Clerk requires
+    const headers = {
+      "svix-id": req.headers["svix-id"],
+      "svix-timestamp": req.headers["svix-timestamp"],
+      "svix-signature": req.headers["svix-signature"],
+    };
 
-    const evt = await verifyWebhook(request, { signingSecret });
+    // 3. Verify the webhook with the raw payload and headers
+    const evt = await verifyWebhook(payload, headers, { signingSecret });
     
     if (evt.type === "user.created" || evt.type === "user.updated") {
       const u = evt.data;
@@ -34,16 +35,17 @@ router.post("/", async (req, res) => {
       const fullName = 
         [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || email?.split("@")[0];
 
-      // Double check if your database schema uses clerkId or clerkID!
+      // 4. Updated to 'clerkID' to match your exact Mongoose Schema
       await User.findOneAndUpdate(
-        { clerkId: u.id }, 
-        { clerkId: u.id, email, fullName, profilePic: u.image_url },
+        { clerkID: u.id }, 
+        { clerkID: u.id, email, fullName, profilePic: u.image_url },
         { new: true, upsert: true, setDefaultsOnInsert: true }
       );
     }
 
     if (evt.type === "user.deleted") {
-      if (evt.data.id) await User.findOneAndDelete({ clerkId: evt.data.id });
+      // 5. Updated to 'clerkID' here too
+      if (evt.data.id) await User.findOneAndDelete({ clerkID: evt.data.id });
     }
 
     res.status(200).json({ received: true });
