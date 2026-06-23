@@ -6,7 +6,7 @@ import express from "express";
 import "dotenv/config";
 import cors from "cors";
 import job from "./lib/cron.js"; // ⚠️ Make sure the file path matches your project structure!
-
+import clerkWebhook from "./webhooks/clerk.webhooks.js"
 import fs from "fs";
 import path from "path";
 
@@ -20,6 +20,8 @@ const PORT = process.env.PORT || 3000;
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
 const publicDir = path.join(process.cwd(), "public");
+
+app.use("/api/webhooks/clerk", express.raw({type:"application/json"}),clerkWebhook)
 
 app.use(express.json())
 app.use(cors({origin:FRONTEND_URL, credentials:true}))
