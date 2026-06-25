@@ -10,6 +10,7 @@ import job from "./lib/cron.js"; // ⚠️ Make sure the file path matches your 
 
 import clerkWebhook from "./webhooks/clerk.webhooks.js"
 import authRoutes from "./routes/auth.route.js"
+import messageRoutes from "./routes/message.routes.js"
 
 import fs from "fs";
 import path from "path";
@@ -36,6 +37,7 @@ app.get("/health", (req,res) => {
 });
 
 app.use("/api/auth", authRoutes)
+app.use("/api/messages", messageRoutes)
 
 // if the public directory exists, serve the static files
 
