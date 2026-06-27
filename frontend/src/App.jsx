@@ -1,14 +1,15 @@
 import { ThemeProvider } from "./context/ThemeContext";
-import { WallpaperProvider } from "./context/WallpaperContext";
+import { WallpaperProvider } from "./context/WallpaperContext.jsx"; // Added curly braces
 import { Route, Routes, Navigate } from "react-router";
 import ChatPage from "./pages/ChatPage";
 import AuthPage from "./pages/AuthPage.jsx";
 import { useAuth } from "@clerk/react";
+import PageLoader from "./components/PageLoader.jsx";
 
 function App() {
   const { isSignedIn, isLoaded } = useAuth();
 
-  if (!isLoaded) return <p>loading...</p>
+  if (!isLoaded) return <PageLoader/>
 
   return (
     <ThemeProvider>
@@ -18,7 +19,7 @@ function App() {
             path="/"
             element={isSignedIn ? <ChatPage /> : <Navigate to="/auth" replace />}
           />
-          <Route path="/auth" element={!isSignedIn ? <AuthPage /> : <Navigate to="/chat" replace />} />
+          <Route path="/auth" element={!isSignedIn ? <AuthPage /> : <Navigate to="/" replace />} />
         </Routes>
       </WallpaperProvider>
     </ThemeProvider>

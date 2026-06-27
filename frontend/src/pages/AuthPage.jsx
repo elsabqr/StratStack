@@ -1,9 +1,24 @@
+import {AuthActionPanel} from "../components/auth/AuthActionPanel.jsx";
+import AuthHeader from "../components/auth/AuthHeader.jsx";
+import { AuthHeroPanel } from "../components/auth/AuthHeroPanel.jsx";
+import { useWallpaper } from "../context/WallpaperContext.jsx"; 
+
 function AuthPage() {
+  const { frameStyle } = useWallpaper();
+
   return (
-    <div>
-      AuthPage
+    <div className="box-border flex min-h-dvh flex-col p-3 sm:p-5 md:p-8" style={frameStyle}>
+      {/* Changed max-w-368 to max-w-[1440px] to prevent layout collapse */}
+      <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col overflow-hidden rounded-3xl border border-border bg-background text-foreground">
+        <AuthHeader />
+
+        <main className="relative flex flex-1 flex-col overflow-hidden md:flex-row">
+          <AuthHeroPanel />
+          <AuthActionPanel />
+        </main>
+      </div>
     </div>
-  )
+  );
 }
 
-export default AuthPage
+export default AuthPage;
